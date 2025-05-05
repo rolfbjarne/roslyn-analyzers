@@ -4081,6 +4081,46 @@ class TestType
         }
 
         [Fact]
+        public async Task SuppressedMacCatalystWithinChildAttributesShouldAlsoAppliedToParentAttributesOnMergeRegression()
+        {
+            var source = @"
+using System;
+using System.Runtime.Versioning;
+
+    [assembly: SupportedOSPlatform (""maccatalyst"")]
+    [assembly: SupportedOSPlatform (""ios"")]
+    [assembly: SupportedOSPlatform (""macos"")]
+    [assembly: SupportedOSPlatform (""tvos"")]
+
+    [SupportedOSPlatform (""maccatalyst"")]
+    [SupportedOSPlatform (""ios"")]
+    [SupportedOSPlatform (""macos"")]
+    [SupportedOSPlatform (""tvos"")]
+    partial class TestType {
+
+        [UnsupportedOSPlatform (""maccatalyst"")]
+        [SupportedOSPlatform (""ios"")]
+        [SupportedOSPlatform (""macos"")]
+        [SupportedOSPlatform (""tvos"")]
+        public static IntPtr FromContext (INativeObject context)
+        {
+            return context.GetHandle ();
+        }
+    }
+
+    public static class NativeObjectExtensions {
+        static public IntPtr GetHandle (this INativeObject self)
+        {
+            return IntPtr.Zero;
+        }
+    }
+
+    public interface INativeObject {}
+";
+            await VerifyAnalyzerCSAsync(source, s_msBuildPlatforms);
+        }
+
+        [Fact]
         public async Task IosUnsupportedOnMacCatalystAsync()
         {
             var source = @"
