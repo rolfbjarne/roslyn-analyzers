@@ -4256,6 +4256,40 @@ using System.Runtime.Versioning;
             await VerifyAnalyzerCSAsync(source, s_msBuildPlatforms);
         }
 
+        [Fact]
+        public async Task SupportedOSPlatformGuardDoesNotWork3()
+        {
+            var source = """
+using System;
+using System.Runtime.Versioning;
+
+// Commenting out either the macOS or the tvOS attributes (in all three places) makes this work.
+[assembly: SupportedOSPlatform ("macos12.0")]
+[assembly: SupportedOSPlatform ("tvos12.2")]
+
+partial class TestType {
+    void DoSomething ()
+    {
+        if (IsAtLeastXcode11) {
+            Console.WriteLine (PerformanceRating);
+        }
+    }
+
+    [SupportedOSPlatform ("macos11.0")]
+    [SupportedOSPlatform ("tvos13.0")]
+    public ulong? PerformanceRating { get; private set; }
+
+    [SupportedOSPlatformGuard ("macos11.0")]
+    [SupportedOSPlatformGuard ("tvos13.0")]
+    internal static bool IsAtLeastXcode11 {
+        get {
+            return true;
+        }
+    }
+}
+""";
+            await VerifyAnalyzerCSAsync(source, s_msBuildPlatforms);
+        }
         private string GetFormattedString(string resource, params string[] args) =>
             string.Format(CultureInfo.InvariantCulture, resource, args);
 
