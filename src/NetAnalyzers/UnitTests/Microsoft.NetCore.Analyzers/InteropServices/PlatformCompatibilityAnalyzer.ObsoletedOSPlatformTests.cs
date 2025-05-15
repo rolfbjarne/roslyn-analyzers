@@ -484,6 +484,44 @@ class Program
             await VerifyAnalyzerCSAsync(source);
         }
 
+        [Fact]
+        public async Task SupportedOSPlatformGuardDoesNotWorkv2()
+        {
+            var source = @"
+using System;
+using System.Runtime.Versioning;
+
+[assembly: SupportedOSPlatform (""macos12.0"")]
+
+partial class TestType {
+    [SupportedOSPlatform (""macos12.0"")]
+    public virtual object DictionaryRepresentation {
+        get {
+            if (IsAtLeastXcode12) {
+                return _DictionaryRepresentation14;
+            } else {
+                return _DictionaryRepresentation13;
+            }
+        }
+    }
+
+    [SupportedOSPlatformGuard (""macos"")]
+    public ulong? _DictionaryRepresentation14 { get; private set; }
+
+    [Mock.UnsupportedOSPlatform (""macos"")]
+    public ulong? _DictionaryRepresentation13 { get; private set; }
+
+    [SupportedOSPlatformGuard (""macos12.0"")]
+    internal static bool IsAtLeastXcode12 {
+        get {
+            return true;
+        }
+    }
+}
+" + MockObsoletedAttributeCS;
+            await VerifyAnalyzerCSAsync(source, s_msBuildPlatforms);
+        }
+
         private readonly string MockObsoletedAttributeCS = @"
 namespace Mock
 {
